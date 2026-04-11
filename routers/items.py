@@ -20,7 +20,7 @@ async def get_items():
     return fake_items_db
 
 
-@router.post("/create-item",response_model= ItemResponse)
+@router.post("/create-item",response_model= ItemResponse, status_code=201)
 async def create_item(item: ItemCreate):
     new_item = ItemResponse(
         id = str(uuid.uuid4()),
@@ -63,4 +63,16 @@ async def get_item(item_id: str):
     for item in fake_items_db:
         if item.id == item_id:
             return item
-    raise HTTPException(status_code=404, detail="Item not found")
+    raise HTTPException(status_code=404, detail=f"Item with id {item_id}not found")
+
+
+@router.delete("/{item_id}", status_code=204)
+async def delete_item(item_id: str):
+    for index, item in enumerate(fake_items_db):
+        if item.id == item_id:
+            fake_items_db.pop(index)
+            return
+
+    raise HTTPException(status_code=404, detail=f"item with id {item_id} not found")
+
+

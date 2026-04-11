@@ -62,14 +62,15 @@ class UserResponse(BaseModel):
 
 
 
-class PredictionInput(BaseModel):
-    feature_1: float
-    feature_2: float
-    feature_3: float
-
+class IrisInput(BaseModel):
+    sepal_length: float = Field(gt=0)
+    sepal_width: float = Field(gt=0)
+    petal_length: float = Field(gt=0)
+    petal_width: float = Field(gt=0)
 
 class PredictionResponse(BaseModel):
     id: str
-    input: PredictionInput
-    prediction: float
+    input: IrisInput
+    prediction: int
+    predicted_class: str
     timestamp: datetime
