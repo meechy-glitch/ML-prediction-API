@@ -1,6 +1,12 @@
 from fastapi import FastAPI 
 from routers import items, users, predictions
+from database.database import engine
+from database import models
+from dotenv import load_dotenv
 
+load_dotenv()
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
