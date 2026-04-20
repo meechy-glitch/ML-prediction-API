@@ -112,3 +112,22 @@ async def get_prediction(prediction_id: str, db : Session = Depends(get_db)):
         predicted_class=p.predicted_class,
         timestamp=p.timestamp
     )
+
+
+
+
+
+
+
+from fastapi import APIRouter, HTTPException, Depends
+from schemas import IrisInput, PredictionResponse
+from database.database import get_db
+from database.models import PredictionModel
+from sqlalchemy.orm import Session
+from datetime import datetime
+import uuid
+from ml.model import model
+from auth.auth import get_api_key
+
+
+
