@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from schemas import IrisInput, PredictionResponse
-from database.database import get_db
+from database.database import get_db, SessionLocal
 from database.models import PredictionModel
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -17,8 +17,27 @@ router = APIRouter(
 CLASS_NAMES = ["setosa", "versicolor", "virginica"]
 
 
+def save_prediction_to_db(prediction_id: str, input: IrisInput, prediction: int, predicted_class: str):
+    db = SessionLocal()
+    try:
+        record = PredictionModel(
+            id=prediction_id,
+            sepal_length=input.sepal_length,
+            sepal_width=input.sepal_width,
+            petal_length=input.petal_length,
+            petal_width=input.petal_width,
+            prediction=prediction,
+            predicted_class=predicted_class,
+            timestamp=datetime.now()
+        )
+        db.add(record)
+        db.commit()
+    finally: 
+        db.close()
+
+
 @router.post("/predict", response_model=PredictionResponse)
-async def predict(input: IrisInput, db: Session = Depends(get_db), api_key: str = Depends(get_api_key)):
+async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: str = Depends(get_api_key)):
     try:
         features = [[
             input.sepal_length,
@@ -28,32 +47,25 @@ async def predict(input: IrisInput, db: Session = Depends(get_db), api_key: str 
         ]]
 
 
-        prediction = model.predict(features)[0]
+        prediction = int(model.predict(features)[0])
         predicted_class = CLASS_NAMES[prediction]
+        prediction_id = str(uuid.uuid4())
 
-        db_prediction = PredictionModel(
-            id=str(uuid.uuid4()),
-            sepal_length=input.sepal_length,
-            sepal_width=input.sepal_width,
-            petal_length=input.petal_length,
-            petal_width=input.petal_width,
-            prediction=int(prediction),
-            predicted_class=predicted_class,
-            timestamp=datetime.now()
+        background_tasks.add_task(
+            save_prediction_to_db,
+            prediction_id,
+            input,
+            int(prediction),
+            predicted_class
         )
-
-        db.add(db_prediction)
-        db.commit()
-        db.refresh(db_prediction)
-
 
 
         return PredictionResponse(
-            id=db_prediction.id,
+            id=prediction_id,
             input=input,
-            prediction=db_prediction.prediction,
-            predicted_class=db_prediction.predicted_class,
-            timestamp=db_prediction.timestamp
+            prediction=int(prediction),
+            predicted_class=predicted_class,
+            timestamp=datetime.now()
         )
 
 
@@ -112,22 +124,6 @@ async def get_prediction(prediction_id: str, db : Session = Depends(get_db)):
         predicted_class=p.predicted_class,
         timestamp=p.timestamp
     )
-
-
-
-
-
-
-
-from fastapi import APIRouter, HTTPException, Depends
-from schemas import IrisInput, PredictionResponse
-from database.database import get_db
-from database.models import PredictionModel
-from sqlalchemy.orm import Session
-from datetime import datetime
-import uuid
-from ml.model import model
-from auth.auth import get_api_key
 
 
 
