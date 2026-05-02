@@ -11,6 +11,7 @@ https://ml-prediction-api-4gxo.onrender.com/docs
 - Pydantic
 - SQLAlchemy + SQLite
 - Docker
+- Redis
 - Python 3.10
 
 ## Authentication
