@@ -5,6 +5,9 @@ from database.models import PredictionModel
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
+import os
+import redis
+import json 
 from ml.model import model
 from auth.auth import get_api_key
 
@@ -15,6 +18,8 @@ router = APIRouter(
 )
 
 CLASS_NAMES = ["setosa", "versicolor", "virginica"]
+
+redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
 
 
 def save_prediction_to_db(prediction_id: str, input: IrisInput, prediction: int, predicted_class: str):
@@ -58,6 +63,7 @@ async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: 
             int(prediction),
             predicted_class
         )
+        background_tasks.add_task(redis_client.delete, "all_predictions")
 
 
         return PredictionResponse(
@@ -84,8 +90,12 @@ async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: 
 
 @router.get("/", response_model=list[PredictionResponse])
 async def get_predictions(db: Session = Depends(get_db)):
+    cached = redis_client.get("all_predictions")
+    if cached:
+        return json.loads(cached)
+
     predictions = db.query(PredictionModel).all()
-    return[
+    result = [
         PredictionResponse(
             id=p.id,
             input=IrisInput(
@@ -99,8 +109,9 @@ async def get_predictions(db: Session = Depends(get_db)):
             timestamp=p.timestamp
         )
         for p in predictions
-
     ]
+    redis_client.setex("all_predictions", 60, json.dumps([r.model_dump(mode="json") for r in result]))
+    return result 
 
 
 @router.get("/{prediction_id}", response_model=PredictionResponse)
