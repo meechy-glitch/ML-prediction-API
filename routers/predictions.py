@@ -10,6 +10,8 @@ import redis
 import json 
 from ml.model import model
 from auth.auth import get_api_key
+from auth.rate_limit import check_rate_limit
+
 
 
 router = APIRouter(
@@ -42,7 +44,7 @@ def save_prediction_to_db(prediction_id: str, input: IrisInput, prediction: int,
 
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: str = Depends(get_api_key)):
+async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: str = Depends(check_rate_limit)):
     try:
         features = [[
             input.sepal_length,
