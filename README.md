@@ -15,7 +15,8 @@ https://ml-prediction-api-4gxo.onrender.com/docs
 - Python 3.10
 
 ## Authentication
-Protected endpoints require an `X-API-Key` header.
+## Authentication
+Protected endpoints require an `X-API-Key` header. Rate limited to 10 requests per 60 seconds.
 
 ```
 X-API-Key: your-api-key
