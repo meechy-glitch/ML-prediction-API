@@ -24,7 +24,7 @@ CLASS_NAMES = ["setosa", "versicolor", "virginica"]
 redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))
 
 
-def save_prediction_to_db(prediction_id: str, input: IrisInput, prediction: int, predicted_class: str):
+def save_prediction_to_db(prediction_id: str, input: IrisInput, prediction: int, predicted_class: str) -> None:
     db = SessionLocal()
     try:
         record = PredictionModel(
@@ -44,7 +44,7 @@ def save_prediction_to_db(prediction_id: str, input: IrisInput, prediction: int,
 
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: str = Depends(check_rate_limit)):
+async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: str = Depends(check_rate_limit)) -> PredictionResponse:
     try:
         features = [[
             input.sepal_length,
@@ -91,7 +91,7 @@ async def predict(input: IrisInput, background_tasks: BackgroundTasks, api_key: 
 
 
 @router.get("/", response_model=list[PredictionResponse])
-async def get_predictions(db: Session = Depends(get_db)):
+async def get_predictions(db: Session = Depends(get_db)) -> list[PredictionResponse]:
     cached = redis_client.get("all_predictions")
     if cached:
         return json.loads(cached)
@@ -117,7 +117,7 @@ async def get_predictions(db: Session = Depends(get_db)):
 
 
 @router.get("/{prediction_id}", response_model=PredictionResponse)
-async def get_prediction(prediction_id: str, db : Session = Depends(get_db)):
+async def get_prediction(prediction_id: str, db : Session = Depends(get_db)) -> PredictionResponse:
     p = db.query(PredictionModel).filter(
         PredictionModel.id == prediction_id 
     ).first()
