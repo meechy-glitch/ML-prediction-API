@@ -15,8 +15,8 @@ https://ml-prediction-api-4gxo.onrender.com/docs
 - Python 3.10
 
 ## Authentication
-## Authentication
-Protected endpoints require an `X-API-Key` header. Rate limited to 10 requests per 60 seconds.
+- **API Key** — machine to machine auth. Pass `X-API-Key` header on protected endpoints. Rate limited to 10 requests per 60 seconds.
+- **JWT** — user auth. Login via `POST /auth/login` to receive a token. Use it on `GET /auth/me` to verify identity. Tokens expire after 30 minutes.
 
 ```
 X-API-Key: your-api-key

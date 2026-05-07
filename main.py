@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI 
-from routers import items, users, predictions, auth
+from routers import predictions, auth
 from database.database import engine
 from database import models
 
@@ -12,8 +12,6 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
-app.include_router(items.router)
-app.include_router(users.router)
 app.include_router(predictions.router)
 app.include_router(auth.router)
 
